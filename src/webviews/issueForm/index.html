@@ -1,0 +1,1237 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="{{CSP}}">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Issue Form</title>
+  <style>
+    :root {
+      --bg: var(--vscode-editor-background, #1e1e1e);
+      --fg: var(--vscode-editor-foreground, #d4d4d4);
+      --border: var(--vscode-panel-border, #3c3c3c);
+      --input-bg: var(--vscode-input-background, #3c3c3c);
+      --input-fg: var(--vscode-input-foreground, #cccccc);
+      --input-border: var(--vscode-input-border, #6b6b6b);
+      --input-focus: var(--vscode-focusBorder, #007fd4);
+      --btn-bg: var(--vscode-button-background, #0e639c);
+      --btn-fg: var(--vscode-button-foreground, #ffffff);
+      --btn-hover: var(--vscode-button-hoverBackground, #1177bb);
+      --secondary-btn-bg: var(--vscode-button-secondaryBackground, #3a3d41);
+      --secondary-btn-fg: var(--vscode-button-secondaryForeground, #cccccc);
+      --tab-active-border: #fd8c73;
+      --toolbar-hover: var(--vscode-toolbar-hoverBackground, #5a5a5a44);
+      --sub-bg: var(--vscode-editorWidget-background, #252526);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: var(--vscode-font-family, sans-serif); font-size: 13px; color: var(--fg); background: var(--bg); padding: 20px; max-width: 860px; margin: 0 auto; }
+
+    h2 { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
+
+    .form-group { margin-bottom: 12px; }
+    label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px; opacity: 0.8; }
+    input[type="text"], input[type="date"], select, textarea {
+      width: 100%; background: var(--input-bg); color: var(--input-fg);
+      border: 1px solid var(--input-border); border-radius: 4px; padding: 6px 8px;
+      font-family: inherit; font-size: 13px; outline: none;
+    }
+    input:focus, select:focus, textarea:focus { border-color: var(--input-focus); box-shadow: 0 0 0 1px var(--input-focus); }
+    input[type="date"] { width: calc(50% - 6px); }
+
+    .date-row { display: flex; gap: 12px; }
+    .date-row .date-field { flex: 1; }
+
+    /* Editor tabs */
+    .editor-box { border: 1px solid var(--border); border-radius: 4px; overflow: hidden; }
+    .tabs { display: flex; background: var(--sub-bg); border-bottom: 1px solid var(--border); padding: 0 8px; }
+    .tab { padding: 6px 14px; font-size: 12px; cursor: pointer; border-bottom: 2px solid transparent; color: var(--fg); opacity: 0.7; background: none; border-top: none; border-left: none; border-right: none; }
+    .tab.active { border-bottom-color: var(--tab-active-border); opacity: 1; font-weight: 600; }
+    .tab:hover:not(.active) { opacity: 0.9; background: var(--toolbar-hover); }
+
+    /* Toolbar */
+    .toolbar { display: flex; align-items: center; gap: 2px; padding: 4px 8px; border-bottom: 1px solid var(--border); background: var(--bg); flex-wrap: wrap; }
+    .tb-btn { background: none; border: none; cursor: pointer; color: var(--fg); padding: 3px 6px; border-radius: 3px; font-size: 12px; opacity: 0.7; line-height: 1; }
+    .tb-btn:hover { background: var(--toolbar-hover); opacity: 1; }
+    .tb-sep { width: 1px; height: 14px; background: var(--border); margin: 0 4px; }
+
+    .editor-body { padding: 8px; background: var(--bg); }
+    textarea#body { height: 200px; resize: vertical; font-family: var(--vscode-editor-font-family, 'Consolas', monospace); font-size: 12px; line-height: 1.5; background: var(--input-bg); }
+    .md-hint { font-size: 11px; opacity: 0.5; margin-top: 4px; }
+    #preview-content { min-height: 200px; padding: 8px; line-height: 1.6; font-size: 13px; }
+    #preview-content h1, #preview-content h2, #preview-content h3 { margin: 12px 0 6px; }
+    #preview-content code { background: var(--input-bg); padding: 1px 4px; border-radius: 3px; font-size: 12px; }
+    #preview-content pre { background: var(--input-bg); padding: 10px; border-radius: 4px; overflow-x: auto; }
+    #preview-content blockquote { border-left: 3px solid var(--border); padding-left: 10px; opacity: 0.7; }
+    #preview-content a { color: var(--input-focus); }
+
+    /* Sub-Issues list */
+    .sub-issues-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+    .sub-issue-item { display: flex; align-items: center; gap: 8px; padding: 4px 8px; background: var(--sub-bg); border: 1px solid var(--border); border-radius: 4px; margin-bottom: 4px; }
+    .sub-issue-title { flex: 1; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .sub-issue-depth { font-size: 10px; opacity: 0.5; }
+    .sub-issue-edit { background: none; border: none; cursor: pointer; color: var(--fg); padding: 2px 4px; border-radius: 2px; font-size: 11px; opacity: 0.6; }
+    .sub-issue-edit:hover { opacity: 1; background: var(--toolbar-hover); }
+
+    /* Buttons */
+    .btn-row { display: flex; gap: 8px; align-items: center; justify-content: flex-end; padding-top: 12px; border-top: 1px solid var(--border); flex-wrap: wrap; }
+    .btn-row-left { flex: 1; }
+    .primary-btn { background: var(--btn-bg); color: var(--btn-fg); border: none; padding: 7px 16px; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: 600; }
+    .primary-btn:hover { background: var(--btn-hover); }
+    .secondary-btn { background: var(--secondary-btn-bg); color: var(--secondary-btn-fg); border: none; padding: 7px 16px; border-radius: 4px; cursor: pointer; font-size: 13px; }
+    .secondary-btn:hover { opacity: 0.85; }
+    .outline-btn { background: none; border: 1px solid var(--border); color: var(--fg); padding: 6px 14px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+    .outline-btn:hover { background: var(--toolbar-hover); }
+
+    /* Modal */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 100; overflow-y: auto; }
+    .modal-overlay.open { display: flex; align-items: flex-start; justify-content: center; padding: 20px; }
+    .modal-box { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; width: 100%; max-width: 700px; padding: 20px; margin-top: 20px; }
+    .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+    .modal-close { background: none; border: none; cursor: pointer; color: var(--fg); font-size: 18px; opacity: 0.7; padding: 2px 6px; }
+    .modal-close:hover { opacity: 1; }
+    .depth-badge { font-size: 11px; padding: 2px 8px; border-radius: 10px; background: var(--sub-bg); border: 1px solid var(--border); }
+
+    .error-msg { color: #f48771; font-size: 12px; margin-top: 6px; display: none; }
+    .success-msg { color: #4caf50; font-size: 12px; margin-top: 6px; display: none; }
+
+    /* ── Labels ── */
+    .label-chips { display: flex; flex-wrap: wrap; gap: 5px; padding: 4px 0; min-height: 26px; }
+    .label-chip {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 2px 9px; border-radius: 10px; font-size: 11px;
+      cursor: pointer; user-select: none; border: 1px solid transparent;
+      transition: opacity 0.15s, box-shadow 0.15s;
+    }
+    .label-chip:not(.selected) { opacity: 0.38; }
+    .label-chip.selected { opacity: 1; box-shadow: 0 0 0 1px rgba(255,255,255,0.25); }
+    .label-chip:hover { opacity: 1; }
+    .label-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .labels-empty { font-size: 11px; opacity: 0.4; padding: 4px 0; }
+
+    #group-select { font-size: 13px; }
+    .synced-notice { font-size: 11px; opacity: 0.6; padding: 6px 10px; background: var(--sub-bg); border-radius: 4px; border-left: 3px solid #4caf50; }
+
+    /* ── Actionable / AI Prompt ── */
+    .actionable-row { display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: var(--sub-bg); border: 1px solid var(--border); border-radius: 4px; cursor: pointer; user-select: none; }
+    .actionable-row input[type="checkbox"] { width: 14px; height: 14px; accent-color: #f5a623; cursor: pointer; flex-shrink: 0; }
+    .actionable-row .actionable-label { font-size: 12px; flex: 1; }
+    .actionable-row .actionable-badge { font-size: 16px; }
+    .ai-prompt-section { border: 1px solid #f5a62355; border-radius: 4px; background: #f5a62308; overflow: hidden; }
+    .ai-prompt-header { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-bottom: 1px solid #f5a62333; }
+    .ai-prompt-header label { flex: 1; font-size: 12px; font-weight: 600; margin: 0; opacity: 1; color: #f5a623; }
+    .ai-prompt-body { padding: 8px; }
+    #ai-prompt { height: 160px; resize: vertical; font-family: var(--vscode-editor-font-family, monospace); font-size: 12px; line-height: 1.6; border-color: #f5a62355; }
+    #ai-prompt:focus { border-color: #f5a623; box-shadow: 0 0 0 1px #f5a623; }
+    .ai-prompt-hint { font-size: 11px; color: #f5a623; opacity: 0.7; margin-top: 4px; }
+
+    /* ── .github ファイル選択 ── */
+    .github-files-section { border-top: 1px solid #f5a62333; }
+    .github-files-header { display: flex; align-items: center; gap: 8px; padding: 7px 10px; }
+    .github-files-title { font-size: 12px; font-weight: 600; color: #f5a623; flex: 1; opacity: 0.9; }
+    .github-files-body { padding: 4px 10px 10px; }
+    .github-files-empty { font-size: 11px; opacity: 0.45; padding: 4px 0 2px; }
+    .github-cat-section { margin-bottom: 10px; }
+    .github-cat-header { font-size: 10px; font-weight: 700; opacity: 0.55; margin: 6px 0 5px; display: flex; align-items: center; gap: 6px; text-transform: uppercase; letter-spacing: 0.04em; }
+    .github-badge { font-size: 9px; padding: 1px 6px; border-radius: 10px; font-weight: 700; text-transform: none; letter-spacing: 0; }
+    .github-badge.skill-prompt { background: #007fd422; color: #7ab3f5; border: 1px solid #007fd444; }
+    .github-badge.skill        { background: #4ec9b022; color: #4ec9b0; border: 1px solid #4ec9b044; }
+    .github-badge.other        { background: #4caf5018; color: #4caf90; border: 1px solid #4caf5033; }
+    .github-files-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(185px, 1fr)); gap: 3px 10px; }
+    .github-file-item { display: flex; align-items: flex-start; gap: 6px; cursor: pointer; padding: 3px 0; }
+    .github-file-item input[type="checkbox"] { width: 13px; height: 13px; accent-color: #f5a623; flex-shrink: 0; cursor: pointer; margin-top: 1px; }
+    .github-file-text { display: flex; flex-direction: column; overflow: hidden; }
+    .github-file-name { font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
+    .github-file-item:hover .github-file-name { text-decoration: underline; }
+    .github-file-desc { font-size: 10px; opacity: 0.55; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 1px; }
+  </style>
+</head>
+<body>
+  <h2 id="form-title">New Issue</h2>
+  <div id="synced-notice" class="synced-notice" style="display:none;margin-bottom:12px"></div>
+
+  <div class="form-group">
+    <label id="label-group" for="group-select"></label>
+    <select id="group-select"></select>
+  </div>
+
+  <div class="form-group">
+    <label id="label-title" for="title"><span style="color:#f48771">*</span></label>
+    <input type="text" id="title" required>
+  </div>
+
+  <div class="form-group">
+    <div class="date-row">
+      <div class="date-field">
+        <label for="start-date">Start Date</label>
+        <input type="date" id="start-date">
+      </div>
+      <div class="date-field">
+        <label for="end-date">End Date <span style="font-size:10px;opacity:0.6">(→ Milestone)</span></label>
+        <input type="date" id="end-date">
+      </div>
+    </div>
+  </div>
+
+  <div class="form-group" id="labels-group">
+    <label>Labels</label>
+    <div class="label-chips" id="label-chips"></div>
+  </div>
+
+  <div class="form-group">
+    <label id="label-actionable"></label>
+    <div class="actionable-row" id="actionable-row">
+      <input type="checkbox" id="is-actionable">
+      <span class="actionable-badge">⚡</span>
+      <span class="actionable-label" id="actionable-desc"></span>
+    </div>
+  </div>
+
+  <!-- AI prompt (shown only when isActionable=true) -->
+  <div class="form-group" id="ai-prompt-group" style="display:none">
+    <div class="ai-prompt-section">
+      <div class="ai-prompt-header">
+        <label id="ai-prompt-label"></label>
+        <button class="outline-btn" id="btn-copy-prompt" type="button" style="font-size:11px;padding:3px 10px;border-color:#f5a62355;color:#f5a623"></button>
+      </div>
+      <div class="ai-prompt-body">
+        <textarea id="ai-prompt"></textarea>
+        <p class="ai-prompt-hint" id="ai-prompt-hint"></p>
+      </div>
+
+      <!-- .github file selector -->
+      <div class="github-files-section" id="github-files-section">
+        <div class="github-files-header">
+          <span class="github-files-title" id="github-files-title"></span>
+          <span id="github-scan-status" style="font-size:10px;opacity:0.5"></span>
+        </div>
+        <div class="github-files-body" id="github-files-body">
+          <p class="github-files-empty" id="github-files-empty"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label id="label-description"></label>
+    <div class="editor-box">
+      <div class="tabs">
+        <button class="tab active" id="tab-write">Write</button>
+        <button class="tab" id="tab-preview">Preview</button>
+      </div>
+      <div id="write-pane">
+        <div class="toolbar" data-toolbar="body">
+          <button class="tb-btn" data-md="h" title="Heading"><b>H</b></button>
+          <button class="tb-btn" data-md="b" title="Bold"><b>B</b></button>
+          <button class="tb-btn" data-md="i" title="Italic"><i>I</i></button>
+          <span class="tb-sep"></span>
+          <button class="tb-btn" data-md="quote" title="Quote">❝</button>
+          <button class="tb-btn" data-md="code" title="Code">&lt;/&gt;</button>
+          <button class="tb-btn" data-md="link" title="Link">🔗</button>
+          <span class="tb-sep"></span>
+          <button class="tb-btn" data-md="list" title="List">≡</button>
+          <button class="tb-btn" data-md="numbered" title="Numbered">1.</button>
+          <button class="tb-btn" data-md="task" title="Task">☐</button>
+        </div>
+        <div class="editor-body">
+          <textarea id="body"></textarea>
+          <p class="md-hint">Markdown</p>
+        </div>
+      </div>
+      <div id="preview-pane" style="display:none">
+        <div id="preview-content" style="padding:12px"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <div class="sub-issues-header">
+      <label style="margin:0">Sub-Issues</label>
+      <button class="outline-btn" id="btn-add-sub">＋ Sub-Issue</button>
+    </div>
+    <div id="sub-issues-list"></div>
+  </div>
+
+  <div id="error-msg" class="error-msg"></div>
+  <div id="success-msg" class="success-msg"></div>
+
+  <div class="btn-row">
+    <div class="btn-row-left">
+      <span id="depth-info" class="depth-badge" style="display:none"></span>
+    </div>
+    <button class="secondary-btn" id="btn-cancel"></button>
+    <button class="primary-btn" id="btn-submit"></button>
+  </div>
+
+  <!-- Sub-Issue Modal -->
+  <div class="modal-overlay" id="sub-modal">
+    <div class="modal-box">
+
+      <!-- Header: breadcrumb + close -->
+      <div class="modal-header">
+        <div style="flex:1;min-width:0">
+          <div id="modal-current-label" style="font-size:10px;opacity:0.5;margin-bottom:3px;letter-spacing:.04em"></div>
+          <div id="modal-breadcrumb" style="font-size:12px;font-weight:600;word-break:break-all;line-height:1.5"></div>
+        </div>
+        <button class="modal-close" id="modal-close">✕</button>
+      </div>
+
+      <!-- Back button -->
+      <div id="modal-back-row" style="display:none;margin-bottom:10px">
+        <button class="outline-btn" id="modal-back" style="font-size:11px"></button>
+      </div>
+
+      <!-- Section A: edit current node (shown when drilled in) -->
+      <div id="modal-edit-section" style="display:none;margin-bottom:14px">
+        <div style="font-size:11px;font-weight:700;opacity:0.8;margin-bottom:6px;display:flex;align-items:center;gap:6px">
+          <span id="modal-edit-gen-label" class="depth-badge"></span>
+          <span id="modal-edit-heading"></span>
+        </div>
+        <div style="background:var(--sub-bg);border:1px solid var(--border);border-radius:4px;padding:10px">
+          <div style="margin-bottom:6px">
+            <label id="modal-edit-title-label" style="font-size:11px;display:block;margin-bottom:3px"></label>
+            <input type="text" id="edit-node-title" style="width:100%;background:var(--input-bg);color:var(--input-fg);border:1px solid var(--input-border);border-radius:4px;padding:5px 8px;font-size:12px">
+          </div>
+          <div style="display:flex;gap:8px;margin-bottom:6px">
+            <div style="flex:1"><label style="font-size:11px;display:block;margin-bottom:3px">Start Date</label><input type="date" id="edit-node-start" style="width:100%;background:var(--input-bg);color:var(--input-fg);border:1px solid var(--input-border);border-radius:4px;padding:4px 6px;font-size:12px"></div>
+            <div style="flex:1"><label style="font-size:11px;display:block;margin-bottom:3px">End Date</label><input type="date" id="edit-node-end" style="width:100%;background:var(--input-bg);color:var(--input-fg);border:1px solid var(--input-border);border-radius:4px;padding:4px 6px;font-size:12px"></div>
+          </div>
+          <div style="margin-bottom:8px">
+            <label id="modal-edit-desc-label" style="font-size:11px;display:block;margin-bottom:3px"></label>
+            <div class="editor-box">
+              <div class="tabs">
+                <button class="tab active" id="en-tab-write">Write</button>
+                <button class="tab" id="en-tab-preview">Preview</button>
+              </div>
+              <div id="en-write-pane">
+                <div class="toolbar" data-toolbar="edit-node-body">
+                  <button class="tb-btn" data-md="h" title="Heading"><b>H</b></button>
+                  <button class="tb-btn" data-md="b" title="Bold"><b>B</b></button>
+                  <button class="tb-btn" data-md="i" title="Italic"><i>I</i></button>
+                  <span class="tb-sep"></span>
+                  <button class="tb-btn" data-md="quote" title="Quote">❝</button>
+                  <button class="tb-btn" data-md="code" title="Code">&lt;/&gt;</button>
+                  <button class="tb-btn" data-md="link" title="Link">🔗</button>
+                  <span class="tb-sep"></span>
+                  <button class="tb-btn" data-md="list" title="List">≡</button>
+                  <button class="tb-btn" data-md="numbered" title="Numbered">1.</button>
+                  <button class="tb-btn" data-md="task" title="Task">☐</button>
+                </div>
+                <div style="padding:6px">
+                  <textarea id="edit-node-body" style="width:100%;height:70px;background:var(--input-bg);color:var(--input-fg);border:1px solid var(--input-border);border-radius:4px;padding:5px 8px;font-family:var(--vscode-editor-font-family,monospace);font-size:12px;resize:vertical"></textarea>
+                </div>
+              </div>
+              <div id="en-preview-pane" style="display:none">
+                <div id="en-preview-content" style="padding:10px;min-height:70px;font-size:12px;line-height:1.6"></div>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;justify-content:flex-end">
+            <button class="primary-btn" id="modal-save-edit" style="padding:4px 14px;font-size:12px"></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section B: add new Sub-Issue at this level -->
+      <div id="modal-add-section">
+        <div style="font-size:11px;font-weight:700;opacity:0.8;margin-bottom:6px;display:flex;align-items:center;gap:6px">
+          <span id="modal-add-gen-label" class="depth-badge"></span>
+          <span id="modal-add-heading"></span>
+        </div>
+        <div style="background:var(--sub-bg);border:1px solid var(--border);border-radius:4px;padding:10px;margin-bottom:12px">
+          <div style="margin-bottom:6px">
+            <label id="modal-add-title-label" style="font-size:11px;display:block;margin-bottom:3px"></label>
+            <input type="text" id="sub-title" style="width:100%;background:var(--input-bg);color:var(--input-fg);border:1px solid var(--input-border);border-radius:4px;padding:5px 8px;font-size:12px">
+          </div>
+          <div style="display:flex;gap:8px;margin-bottom:6px">
+            <div style="flex:1"><label style="font-size:11px;display:block;margin-bottom:3px">Start Date</label><input type="date" id="sub-start-date" style="width:100%;background:var(--input-bg);color:var(--input-fg);border:1px solid var(--input-border);border-radius:4px;padding:4px 6px;font-size:12px"></div>
+            <div style="flex:1"><label style="font-size:11px;display:block;margin-bottom:3px">End Date</label><input type="date" id="sub-end-date" style="width:100%;background:var(--input-bg);color:var(--input-fg);border:1px solid var(--input-border);border-radius:4px;padding:4px 6px;font-size:12px"></div>
+          </div>
+          <div style="margin-bottom:8px">
+            <label id="modal-add-desc-label" style="font-size:11px;display:block;margin-bottom:3px"></label>
+            <div class="editor-box">
+              <div class="tabs">
+                <button class="tab active" id="sb-tab-write">Write</button>
+                <button class="tab" id="sb-tab-preview">Preview</button>
+              </div>
+              <div id="sb-write-pane">
+                <div class="toolbar" data-toolbar="sub-body">
+                  <button class="tb-btn" data-md="h" title="Heading"><b>H</b></button>
+                  <button class="tb-btn" data-md="b" title="Bold"><b>B</b></button>
+                  <button class="tb-btn" data-md="i" title="Italic"><i>I</i></button>
+                  <span class="tb-sep"></span>
+                  <button class="tb-btn" data-md="quote" title="Quote">❝</button>
+                  <button class="tb-btn" data-md="code" title="Code">&lt;/&gt;</button>
+                  <button class="tb-btn" data-md="link" title="Link">🔗</button>
+                  <span class="tb-sep"></span>
+                  <button class="tb-btn" data-md="list" title="List">≡</button>
+                  <button class="tb-btn" data-md="numbered" title="Numbered">1.</button>
+                  <button class="tb-btn" data-md="task" title="Task">☐</button>
+                </div>
+                <div style="padding:6px">
+                  <textarea id="sub-body" style="width:100%;height:70px;background:var(--input-bg);color:var(--input-fg);border:1px solid var(--input-border);border-radius:4px;padding:5px 8px;font-family:var(--vscode-editor-font-family,monospace);font-size:12px;resize:vertical"></textarea>
+                </div>
+              </div>
+              <div id="sb-preview-pane" style="display:none">
+                <div id="sb-preview-content" style="padding:10px;min-height:70px;font-size:12px;line-height:1.6"></div>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;justify-content:flex-end">
+            <button class="primary-btn" id="modal-add" style="padding:4px 14px;font-size:12px"></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section C: list of Sub-Issues at this level -->
+      <div>
+        <div style="font-size:11px;font-weight:700;opacity:0.7;margin-bottom:6px" id="modal-list-label"></div>
+        <div id="modal-sub-list"></div>
+      </div>
+
+      <!-- Footer -->
+      <div style="display:flex;justify-content:flex-end;gap:8px;padding-top:12px;border-top:1px solid var(--border);margin-top:12px">
+        <button class="outline-btn" id="modal-cancel"></button>
+        <button class="secondary-btn" id="modal-done"></button>
+      </div>
+    </div>
+  </div>
+
+  <script nonce="{{NONCE}}">
+    const IC = {{LOCALE_JSON}};
+    const vscode = acquireVsCodeApi();
+
+    /** {0} {1} … placeholder substitution */
+    function t(tmpl, ...args) {
+      return args.reduce((s, a, i) => s.replace(`{${i}}`, a), tmpl);
+    }
+
+    /** Apply all locale strings to static HTML elements */
+    function initLocale() {
+      document.documentElement.lang = IC.lang;
+      document.getElementById('synced-notice').textContent      = IC.formSyncedNotice;
+      document.getElementById('label-group').textContent        = IC.formLabelGroup;
+      // title label preserves the required star
+      document.getElementById('label-title').insertAdjacentText('afterbegin', IC.formLabelTitle + ' ');
+      document.getElementById('title').placeholder              = IC.formTitlePlaceholder;
+      document.getElementById('label-actionable').textContent   = IC.formLabelActionable;
+      document.getElementById('actionable-desc').textContent    = IC.formActionableDesc;
+      document.getElementById('btn-copy-prompt').textContent    = IC.formCopyBtn;
+      document.getElementById('ai-prompt').placeholder          = IC.formAiPlaceholder;
+      document.getElementById('ai-prompt-hint').textContent     = IC.formAiHint;
+      document.getElementById('github-files-title').textContent = IC.formGithubTitle;
+      document.getElementById('github-files-empty').textContent = IC.formGithubScanning;
+      //document.getElementById('btn-rescan-github').textContent  = IC.formGithubRescan;
+      document.getElementById('label-description').textContent  = IC.formLabelDescription;
+      document.getElementById('body').placeholder               = IC.formBodyPlaceholder;
+      document.getElementById('btn-cancel').textContent         = IC.formCancelBtn;
+      document.getElementById('btn-submit').textContent         = IC.formSubmitBtn;
+      // Modal strings
+      document.getElementById('modal-current-label').textContent = IC.formModalCurrent;
+      document.getElementById('modal-back').textContent          = IC.formModalBack;
+      document.getElementById('modal-edit-heading').textContent  = IC.formModalEditHeading;
+      document.getElementById('modal-edit-title-label').textContent = IC.formLabelTitle;
+      document.getElementById('modal-edit-desc-label').textContent  = IC.formLabelDescription;
+      document.getElementById('modal-save-edit').textContent    = IC.formSaveBtn;
+      document.getElementById('modal-add-heading').textContent  = IC.formModalAddHeading;
+      document.getElementById('modal-add-title-label').textContent = IC.formLabelTitle;
+      document.getElementById('modal-add-desc-label').textContent  = IC.formLabelDescription;
+      document.getElementById('sub-title').placeholder          = IC.formSubTitlePlaceholder;
+      document.getElementById('sub-body').placeholder           = IC.formSubBodyPlaceholder;
+      document.getElementById('modal-add').textContent          = IC.formModalAddBtn;
+      document.getElementById('modal-cancel').textContent       = IC.formCancelBtn;
+      document.getElementById('modal-done').textContent         = IC.formDoneBtn;
+      document.getElementById('ai-prompt-label').textContent    = IC.formAiLabel;
+      // preview placeholders
+      document.getElementById('preview-content').innerHTML    = `<span style="opacity:0.5">${esc(IC.formPreviewNone)}</span>`;
+      document.getElementById('en-preview-content').innerHTML = `<span style="opacity:0.5">${esc(IC.formPreviewNone)}</span>`;
+      document.getElementById('sb-preview-content').innerHTML = `<span style="opacity:0.5">${esc(IC.formPreviewNone)}</span>`;
+    }
+
+    let formState = {
+      mode: 'create',
+      groupId: '',
+      groups: [],
+      issue: null,
+      parentLocalId: null,
+      depth: 0,
+      children: [],
+      editingChildIndex: null,
+      availableLabels: [],
+      selectedLabels: [],
+      isActionable: false,
+      aiPrompt: '',
+      githubFiles: [],
+      githubPromptFiles: [],
+    };
+
+    // ─── Message receiver ────────────────────────────────────────
+    window.addEventListener('message', e => {
+      const msg = e.data;
+      if (msg.type === 'init') {
+        formState.mode = msg.mode;
+        formState.groupId = msg.groupId;
+        formState.groups = msg.groups || [];
+        formState.issue = msg.issue || null;
+        formState.parentLocalId = msg.parentLocalId || null;
+        formState.depth = msg.issue?.depth ?? (msg.parentLocalId ? getParentDepth(msg.groups, msg.parentLocalId) + 1 : 0);
+        formState.children = msg.issue?.children ? deepClone(msg.issue.children) : [];
+        formState.availableLabels = msg.availableLabels || [];
+        formState.selectedLabels  = msg.issue?.labels ? [...msg.issue.labels] : [];
+        formState.isActionable      = msg.issue?.isActionable ?? false;
+        formState.aiPrompt          = msg.issue?.aiPrompt ?? '';
+        formState.githubFiles       = msg.githubFiles || [];
+        formState.githubPromptFiles = msg.issue?.githubPromptFiles ? [...msg.issue.githubPromptFiles] : [];
+        populateForm();
+      } else if (msg.type === 'githubFiles') {
+        formState.githubFiles = msg.files || [];
+        document.getElementById('github-scan-status').textContent = '';
+        renderGithubFiles();
+      } else if (msg.type === 'submitSuccess') {
+        showSuccess(IC.formSuccessMsg);
+        if (formState.mode === 'create') { resetForm(); }
+      } else if (msg.type === 'error') {
+        showError(msg.message);
+      }
+    });
+
+    function getParentDepth(groups, parentLocalId) {
+      for (const g of groups) {
+        const node = findNode(g.issues, parentLocalId);
+        if (node) return node.depth;
+      }
+      return 0;
+    }
+
+    function findNode(nodes, localId) {
+      for (const n of nodes) {
+        if (n.localId === localId) return n;
+        const found = findNode(n.children || [], localId);
+        if (found) return found;
+      }
+      return null;
+    }
+
+    function populateForm() {
+      // Group selector
+      const sel = document.getElementById('group-select');
+      sel.innerHTML = formState.groups.map(g =>
+        `<option value="${g.id}" ${g.id === formState.groupId ? 'selected' : ''}>${esc(g.name)} (${esc(g.repo)})</option>`
+      ).join('');
+
+      // Form title
+      document.getElementById('form-title').textContent =
+        formState.mode === 'create' ? 'New Issue' : `Edit: ${formState.issue?.title || 'Issue'}`;
+
+      // Existing data
+      if (formState.issue) {
+        document.getElementById('title').value = formState.issue.title || '';
+        document.getElementById('body').value = formState.issue.body || '';
+        document.getElementById('start-date').value = formState.issue.startDate || '';
+        document.getElementById('end-date').value = formState.issue.endDate || '';
+        document.getElementById('synced-notice').style.display =
+          formState.issue.synced ? 'block' : 'none';
+      } else {
+        document.getElementById('title').value = '';
+        document.getElementById('body').value = '';
+        document.getElementById('start-date').value = '';
+        document.getElementById('end-date').value = '';
+        document.getElementById('synced-notice').style.display = 'none';
+      }
+
+      // Depth badge (Gen notation)
+      const depthBadge = document.getElementById('depth-info');
+      depthBadge.textContent = genLabel(formState.depth);
+      depthBadge.style.display = 'inline-block';
+
+      // Sub-Issue button control
+      const canAddSub = formState.depth < 6;
+      document.getElementById('btn-add-sub').disabled = !canAddSub;
+      document.getElementById('btn-add-sub').style.opacity = canAddSub ? '1' : '0.4';
+      document.getElementById('btn-add-sub').title = canAddSub ? IC.formAddSubTip : IC.formDepthMaxTip;
+
+      // isActionable / aiPrompt / githubFiles
+      document.getElementById('is-actionable').checked = formState.isActionable;
+      // Auto-fill AI prompt with title if actionable and prompt is still empty
+      const promptVal = formState.aiPrompt ||
+        (formState.isActionable ? (document.getElementById('title').value.trim() || '') : '');
+      document.getElementById('ai-prompt').value = promptVal;
+      document.getElementById('ai-prompt-group').style.display = formState.isActionable ? 'block' : 'none';
+      renderGithubFiles();
+
+      renderSubIssues();
+      renderLabels();
+    }
+
+    // ─── Label selector ──────────────────────────────────────────
+    function renderLabels() {
+      const container = document.getElementById('label-chips');
+      container.innerHTML = '';
+
+      if (formState.availableLabels.length === 0) {
+        if (formState.selectedLabels.length > 0) {
+          formState.selectedLabels.forEach(name => {
+            const chip = document.createElement('span');
+            chip.className = 'label-chip selected';
+            chip.style.cssText = 'background:var(--badge-bg);color:var(--badge-fg)';
+            chip.innerHTML = `<span class="label-dot" style="background:#888"></span>${esc(name)}`;
+            container.appendChild(chip);
+          });
+          const note = document.createElement('span');
+          note.className = 'labels-empty';
+          note.style.cssText = 'display:block;margin-top:3px';
+          note.textContent = IC.formLabelNoGitHub2;
+          container.appendChild(note);
+        } else {
+          const empty = document.createElement('span');
+          empty.className = 'labels-empty';
+          empty.textContent = IC.formLabelNoGitHub;
+          container.appendChild(empty);
+        }
+        return;
+      }
+
+      formState.availableLabels.forEach(label => {
+        const selected = formState.selectedLabels.includes(label.name);
+        const bg = '#' + label.color;
+        const textColor = contrastColor(label.color);
+        const chip = document.createElement('span');
+        chip.className = 'label-chip' + (selected ? ' selected' : '');
+        chip.style.cssText = `background:${bg};color:${textColor}`;
+        chip.dataset.labelName = label.name;
+        chip.innerHTML = `<span class="label-dot" style="background:${textColor};opacity:0.4"></span>${esc(label.name)}`;
+        chip.addEventListener('click', () => {
+          const idx = formState.selectedLabels.indexOf(label.name);
+          if (idx >= 0) { formState.selectedLabels.splice(idx, 1); }
+          else { formState.selectedLabels.push(label.name); }
+          renderLabels();
+        });
+        container.appendChild(chip);
+      });
+    }
+
+    function contrastColor(hex) {
+      const r = parseInt(hex.slice(0, 2), 16);
+      const g = parseInt(hex.slice(2, 4), 16);
+      const b = parseInt(hex.slice(4, 6), 16);
+      return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.5 ? '#000' : '#fff';
+    }
+
+    // ─── .github file rendering ───────────────────────────────────
+    function renderGithubFiles() {
+      const body  = document.getElementById('github-files-body');
+      const empty = document.getElementById('github-files-empty');
+      const files = formState.githubFiles;
+      body.querySelectorAll('.github-cat-section').forEach(el => el.remove());
+
+      if (!files || files.length === 0) {
+        empty.style.display = 'block';
+        empty.textContent   = files && files.length === 0
+          ? IC.formGithubEmpty
+          : IC.formGithubScanning;
+        return;
+      }
+      empty.style.display = 'none';
+
+      const skillFiles = files.filter(f => f.category === 'skill-prompt' || f.category === 'skill');
+      const otherFiles = files.filter(f => f.category === 'other');
+
+      if (skillFiles.length > 0) {
+        body.appendChild(buildCatSection(IC.formGithubSkillCat, skillFiles, 'skill-prompt'));
+      }
+      if (otherFiles.length > 0) {
+        body.appendChild(buildCatSection(IC.formGithubOtherCat, otherFiles, 'other'));
+      }
+    }
+
+    function buildCatSection(title, files, badgeType) {
+      const section = document.createElement('div');
+      section.className = 'github-cat-section';
+
+      const hdr = document.createElement('div');
+      hdr.className = 'github-cat-header';
+      const badgeLabel = badgeType === 'skill-prompt' ? 'Skill Prompt' : 'Other';
+      hdr.innerHTML = escHtml(title) + ` <span class="github-badge ${badgeType}">${badgeLabel}</span>`;
+      section.appendChild(hdr);
+
+      const grid = document.createElement('div');
+      grid.className = 'github-files-grid';
+
+      files.forEach(f => {
+        const lbl = document.createElement('label');
+        lbl.className = 'github-file-item';
+        lbl.title = f.description ? `${f.path}\n${f.description}` : f.path;
+        const isChecked = formState.githubPromptFiles.includes(f.path);
+        const cb  = document.createElement('input');
+        cb.type   = 'checkbox';
+        cb.checked = isChecked;
+        cb.addEventListener('change', () => {
+          if (cb.checked) {
+            if (!formState.githubPromptFiles.includes(f.path)) {
+              formState.githubPromptFiles.push(f.path);
+            }
+          } else {
+            formState.githubPromptFiles = formState.githubPromptFiles.filter(p => p !== f.path);
+          }
+        });
+        const textWrap = document.createElement('div');
+        textWrap.className = 'github-file-text';
+        const span = document.createElement('span');
+        span.className   = 'github-file-name';
+        span.textContent = f.name;
+        textWrap.appendChild(span);
+        if (f.description) {
+          const desc = document.createElement('span');
+          desc.className   = 'github-file-desc';
+          desc.textContent = f.description;
+          textWrap.appendChild(desc);
+        }
+        lbl.appendChild(cb);
+        lbl.appendChild(textWrap);
+        grid.appendChild(lbl);
+      });
+
+      section.appendChild(grid);
+      return section;
+    }
+
+    function escHtml(s) {
+      return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+//    document.getElementById('btn-rescan-github').addEventListener('click', () => {
+//      document.getElementById('github-scan-status').textContent = IC.formGithubScanningStatus;
+//      vscode.postMessage({ type: 'rescanGithub' });
+//    });
+
+    // ─── isActionable toggle ──────────────────────────────────────
+    document.getElementById('actionable-row').addEventListener('click', e => {
+      if (e.target.id === 'is-actionable') return;
+      document.getElementById('is-actionable').click();
+    });
+    document.getElementById('is-actionable').addEventListener('change', e => {
+      formState.isActionable = e.target.checked;
+      document.getElementById('ai-prompt-group').style.display = formState.isActionable ? 'block' : 'none';
+      // Auto-fill AI prompt with issue title when first toggled on and field is empty
+      if (formState.isActionable) {
+        const promptEl = document.getElementById('ai-prompt');
+        if (!promptEl.value.trim()) {
+          const titleVal = document.getElementById('title').value.trim();
+          if (titleVal) { promptEl.value = titleVal; }
+        }
+      }
+    });
+
+    // ─── AI prompt copy button ────────────────────────────────────
+    document.getElementById('btn-copy-prompt').addEventListener('click', () => {
+      let text = document.getElementById('ai-prompt').value;
+      if (formState.githubPromptFiles.length > 0) {
+        text += '\n\n## .github\n';
+        formState.githubPromptFiles.forEach(fp => {
+          const base = fp.split('/').pop() || '';
+          const name = base.replace(/\.md$/i, '');
+          const cat  = fp.includes('/prompts/') ? IC.formGithubCopySkill
+                     : name.toLowerCase().includes('skill') ? IC.formGithubCopySkill
+                     : IC.formGithubCopyOther;
+          text += `- [${cat}] #file:${fp}\n`;
+        });
+      }
+      if (!text.trim()) { return; }
+      navigator.clipboard.writeText(text).then(() => {
+        const btn = document.getElementById('btn-copy-prompt');
+        const orig = btn.textContent;
+        btn.textContent = IC.formCopyDone;
+        setTimeout(() => { btn.textContent = orig; }, 2000);
+      });
+    });
+
+    // Gen1～Gen7 label
+    function genLabel(depth) {
+      return `Gen${depth + 1}`;
+    }
+
+    function renderSubIssues() {
+      const list = document.getElementById('sub-issues-list');
+      if (formState.children.length === 0) {
+        list.innerHTML = `<div style="opacity:0.5;font-size:11px;padding:4px 0">${esc(IC.formSubIssuesEmpty)}</div>`;
+        return;
+      }
+      list.innerHTML = '';
+      const childDepth = formState.depth + 1;
+      const canDrillIn = childDepth <= 6;
+      formState.children.forEach((child, i) => {
+        const item = document.createElement('div');
+        item.className = 'sub-issue-item';
+        const childCount = child.children?.length || 0;
+        item.innerHTML = `
+          <span class="sub-issue-depth">${genLabel(childDepth)}</span>
+          <span class="sub-issue-title" title="${esc(child.title)}">${esc(child.title)}</span>
+          ${childCount ? `<span style="font-size:10px;padding:1px 5px;background:var(--sub-bg);border:1px solid var(--border);border-radius:8px;opacity:0.8">${childCount} sub</span>` : ''}
+          <button class="sub-issue-edit" data-drill-root="${i}" title="${esc(genLabel(childDepth))} ${esc(IC.issueEditTip)}">
+            <svg xmlns="http://www.w3.org/2000/svg" height="12px" viewBox="0 -960 960 960" width="12px" fill="currentColor" style="vertical-align:middle;margin-right:3px"><path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z"/></svg>
+          </button>
+          ${childDepth < 6
+            ? `<button class="sub-issue-edit" data-drill-root="${i}" title="${esc(genLabel(childDepth + 1))} ${esc(IC.formAddSubTip)}" style="color:var(--accent);font-size:11px">＋ Sub-Issue</button>`
+            : `<span style="font-size:10px;opacity:0.4" title="${esc(IC.formDepthMaxTip)}">Gen7</span>`}
+          ${!child.synced
+            ? `<button class="sub-issue-edit" data-del-root="${i}" title="${esc(IC.issueDeleteTip)}" style="color:#f48771">✕</button>`
+            : `<span style="font-size:10px;color:#4caf50" title="${esc(IC.issueSyncedTip)}">✓</span>`}
+        `;
+        list.appendChild(item);
+      });
+    }
+
+    // ─── MD editor common setup ───────────────────────────────────
+    function setupMdEditor(writeTabId, previewTabId, writePaneId, previewPaneId, previewContentId, textareaId) {
+      document.getElementById(writeTabId).addEventListener('click', () => {
+        document.getElementById(writeTabId).classList.add('active');
+        document.getElementById(previewTabId).classList.remove('active');
+        document.getElementById(writePaneId).style.display = '';
+        document.getElementById(previewPaneId).style.display = 'none';
+      });
+      document.getElementById(previewTabId).addEventListener('click', () => {
+        document.getElementById(previewTabId).classList.add('active');
+        document.getElementById(writeTabId).classList.remove('active');
+        document.getElementById(writePaneId).style.display = 'none';
+        document.getElementById(previewPaneId).style.display = '';
+        const raw = document.getElementById(textareaId).value;
+        document.getElementById(previewContentId).innerHTML = raw
+          ? formatMd(raw)
+          : `<span style="opacity:0.5">${esc(IC.formPreviewNone)}</span>`;
+      });
+      document.getElementById(textareaId).addEventListener('keydown', handleListEnter);
+    }
+
+    setupMdEditor('tab-write',    'tab-preview',    'write-pane',    'preview-pane',    'preview-content',    'body');
+    setupMdEditor('en-tab-write', 'en-tab-preview', 'en-write-pane', 'en-preview-pane', 'en-preview-content', 'edit-node-body');
+    setupMdEditor('sb-tab-write', 'sb-tab-preview', 'sb-write-pane', 'sb-preview-pane', 'sb-preview-content', 'sub-body');
+
+    // ─── Markdown toolbar ─────────────────────────────────────────
+    document.querySelectorAll('.toolbar[data-toolbar] [data-md]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const toolbar = btn.closest('.toolbar[data-toolbar]');
+        insertMd(btn.dataset.md, toolbar.dataset.toolbar);
+      });
+    });
+
+    function insertMd(type, textareaId) {
+      const ta = document.getElementById(textareaId);
+      const s = ta.selectionStart, e = ta.selectionEnd;
+      const sel = ta.value.substring(s, e);
+      const before = ta.value.substring(0, s);
+      const after = ta.value.substring(e);
+      const nl = before.length > 0 && !before.endsWith('\n') ? '\n' : '';
+      let ins = '';
+      switch (type) {
+        case 'h': ins = `${nl}### ${sel || 'Heading'}`; break;
+        case 'b': ins = `**${sel || 'bold'}**`; break;
+        case 'i': ins = `_${sel || 'italic'}_`; break;
+        case 'quote': ins = `${nl}> ${sel || 'Quote'}`; break;
+        case 'code': ins = sel.includes('\n') ? `\n\`\`\`\n${sel || 'code'}\n\`\`\`\n` : `\`${sel || 'code'}\``; break;
+        case 'link': ins = `[${sel || 'text'}](https://)`; break;
+        case 'list': ins = `${nl}- ${sel}`; break;
+        case 'numbered': ins = `${nl}1. ${sel}`; break;
+        case 'task': ins = `${nl}- [ ] ${sel}`; break;
+      }
+      ta.value = before + ins + after;
+      ta.focus();
+      ta.setSelectionRange(s + ins.length, s + ins.length);
+    }
+
+    // ─── Enter key: inherit list style ───────────────────────────
+    function handleListEnter(e) {
+      if (e.key !== 'Enter') return;
+
+      const ta    = e.target;
+      const pos   = ta.selectionStart;
+      const text  = ta.value;
+
+      const lineStart  = text.lastIndexOf('\n', pos - 1) + 1;
+      const currentLine = text.substring(lineStart, pos);
+
+      const taskMatch = currentLine.match(/^(\s*)- \[[ x]\] (.*)/);
+      const listMatch = currentLine.match(/^(\s*)- (.*)/);
+      const numMatch  = currentLine.match(/^(\s*)(\d+)\. (.*)/);
+
+      let prefix = null;
+      let isEmpty = false;
+
+      if (taskMatch) {
+        isEmpty = taskMatch[2].trim() === '';
+        prefix  = `${taskMatch[1]}- [ ] `;
+      } else if (listMatch) {
+        isEmpty = listMatch[2].trim() === '';
+        prefix  = `${listMatch[1]}- `;
+      } else if (numMatch) {
+        isEmpty = numMatch[3].trim() === '';
+        prefix  = `${numMatch[1]}${parseInt(numMatch[2]) + 1}. `;
+      }
+
+      if (prefix === null) return;
+
+      e.preventDefault();
+
+      if (isEmpty) {
+        const newText = text.substring(0, lineStart) + '\n' + text.substring(pos);
+        ta.value = newText;
+        ta.setSelectionRange(lineStart + 1, lineStart + 1);
+      } else {
+        const insertion = '\n' + prefix;
+        ta.value = text.substring(0, pos) + insertion + text.substring(pos);
+        const newPos = pos + insertion.length;
+        ta.setSelectionRange(newPos, newPos);
+      }
+    }
+
+    function formatMd(text) {
+      // プレースホルダ方式: コードを先に保護してから他の変換を行う
+      const saved = [];
+      const protect = html => { saved.push(html); return `\x00${saved.length - 1}\x00`; };
+
+      // Step1: コードフェンス (```) を保護（中身はHTMLエスケープ）
+      text = text.replace(/```[\s\S]*?```/g, m => {
+        const inner = m.slice(3, -3).replace(/^\n/, '').replace(/\n$/, '');
+        return protect(`<pre><code>${esc(inner)}</code></pre>`);
+      });
+      // インラインコード (`...`) を保護
+      text = text.replace(/`([^`\n]+)`/g, (_, c) => protect(`<code>${esc(c)}</code>`));
+
+      // Step2: ブロック要素（行単位）を保護しつつ変換
+      text = text
+        .replace(/^### (.*)/gm, (_, s) => protect(`<h3>${mdInline(s)}</h3>`))
+        .replace(/^## (.*)/gm,  (_, s) => protect(`<h2>${mdInline(s)}</h2>`))
+        .replace(/^# (.*)/gm,   (_, s) => protect(`<h1>${mdInline(s)}</h1>`))
+        .replace(/^> (.*)/gm,   (_, s) => protect(`<blockquote>${mdInline(s)}</blockquote>`))
+        .replace(/^- \[x\] (.*)/gm, (_, s) => protect(`<div>✅ <s>${mdInline(s)}</s></div>`))
+        .replace(/^- \[ \] (.*)/gm, (_, s) => protect(`<div>☐ ${mdInline(s)}</div>`))
+        .replace(/^- (.*)/gm,   (_, s) => protect(`<li>${mdInline(s)}</li>`))
+        .replace(/^\d+\. (.*)/gm, (_, s) => protect(`<li>${mdInline(s)}</li>`));
+
+      // Step3: 残りのテキストにインライン書式を適用
+      text = mdInline(text);
+
+      // Step4: 改行処理（ブロック周辺の \n を除去 → 空行 → 改行）
+      text = text.replace(/\n*(\x00\d+\x00)\n*/g, '$1'); // ブロック要素前後の改行を除去
+      text = text.replace(/\n{2,}/g, '<br>');             // 空行 → <br>
+      text = text.replace(/\n/g, '<br>');                 // ソフト改行 → <br>
+
+      // Step5: プレースホルダを元のHTMLに復元
+      return text.replace(/\x00(\d+)\x00/g, (_, i) => saved[+i]);
+    }
+
+    // インライン書式のみ適用（コードブロック内では呼ばれない）
+    function mdInline(text) {
+      return text
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        // アンダースコアは単語の中（前後が英数字・_）では斜体化しない
+        .replace(/(?<![a-zA-Z0-9_])_([^_\n]+?)_(?![a-zA-Z0-9_])/g, '<em>$1</em>')
+        .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+    }
+
+    // ─── Sub-Issue modal (breadcrumb + edit-form style) ───────────
+    //
+    // modalPath: index path to the currently displayed level
+    //   []     → formState.children root (add-only, no edit section)
+    //   [i]    → edit formState.children[i] + manage its children
+    //   [i, j] → edit formState.children[i].children[j] + manage its children
+    //
+    let modalPath = [];
+
+    // ── Tree helpers ─────────────────────────────────────────────
+
+    function getNodeAtPath(path) {
+      if (path.length === 0) return null;
+      let nodes = formState.children;
+      let node = null;
+      for (const idx of path) { node = nodes[idx]; nodes = node.children; }
+      return node;
+    }
+
+    function getChildrenAtPath(path) {
+      let nodes = formState.children;
+      for (const idx of path) { nodes = nodes[idx].children; }
+      return nodes;
+    }
+
+    function getBreadcrumbs(path) {
+      const crumbs = [{ title: document.getElementById('title').value || '…', depth: formState.depth }];
+      let nodes = formState.children;
+      for (const idx of path) {
+        crumbs.push({ title: nodes[idx].title || '…', depth: nodes[idx].depth });
+        nodes = nodes[idx].children;
+      }
+      return crumbs;
+    }
+
+    function getAddDepthAtPath(path) {
+      return formState.depth + 1 + path.length;
+    }
+
+    // ── Modal open/close ─────────────────────────────────────────
+
+    function openModal(path) {
+      modalPath = path;
+      clearAddForm();
+      renderModal();
+      document.getElementById('sub-modal').classList.add('open');
+      document.getElementById('sub-title').focus();
+    }
+
+    function closeModal() {
+      document.getElementById('sub-modal').classList.remove('open');
+      renderSubIssues();
+    }
+
+    // ── Full modal render ────────────────────────────────────────
+
+    function renderModal() {
+      const addDepth   = getAddDepthAtPath(modalPath);
+      const crumbs     = getBreadcrumbs(modalPath);
+      const currentNode = getNodeAtPath(modalPath);
+      const drillDepth  = modalPath.length > 0 ? currentNode.depth : null;
+
+      // Breadcrumb
+      document.getElementById('modal-breadcrumb').innerHTML = crumbs.map((c, i) =>
+        i < crumbs.length - 1
+          ? `<span style="opacity:0.55">${esc(c.title)}</span><span style="opacity:0.35;margin:0 4px">›</span>`
+          : `<span style="font-weight:700">${esc(c.title)}</span>`
+      ).join('');
+
+      // Back button
+      document.getElementById('modal-back-row').style.display =
+        modalPath.length > 0 ? 'block' : 'none';
+
+      // ── Section A: node edit form (drill-down only) ──
+      const editSection = document.getElementById('modal-edit-section');
+      if (currentNode) {
+        editSection.style.display = 'block';
+        document.getElementById('modal-edit-gen-label').textContent = genLabel(drillDepth);
+        document.getElementById('edit-node-title').value = currentNode.title || '';
+        document.getElementById('edit-node-start').value  = currentNode.startDate || '';
+        document.getElementById('edit-node-end').value    = currentNode.endDate || '';
+        document.getElementById('edit-node-body').value   = currentNode.body || '';
+      } else {
+        editSection.style.display = 'none';
+      }
+
+      // ── Section B: add form ──
+      const addSection = document.getElementById('modal-add-section');
+      const isMaxDepth = addDepth > 6;
+      addSection.style.display = isMaxDepth ? 'none' : 'block';
+      if (!isMaxDepth) {
+        document.getElementById('modal-add-gen-label').textContent = genLabel(addDepth);
+        const addBtn = document.getElementById('modal-add');
+        addBtn.disabled = false;
+        addBtn.style.opacity = '1';
+      }
+
+      // ── Section C: child list ──
+      const listLabel = document.getElementById('modal-list-label');
+      listLabel.textContent = isMaxDepth
+        ? t(IC.formMaxGenLabel, genLabel(addDepth))
+        : t(IC.formListLabel, genLabel(addDepth));
+      renderModalList();
+    }
+
+    function renderModalList() {
+      const list     = document.getElementById('modal-sub-list');
+      const nodes    = getChildrenAtPath(modalPath);
+      const addDepth = getAddDepthAtPath(modalPath);
+
+      if (nodes.length === 0) {
+        list.innerHTML = `<div style="opacity:0.4;font-size:11px;padding:5px 2px">${esc(IC.formModalNotAdded)}</div>`;
+        return;
+      }
+
+      list.innerHTML = '';
+      nodes.forEach((node, i) => {
+        const childCount  = node.children?.length || 0;
+        const canDrillIn  = addDepth <= 6;
+        const item = document.createElement('div');
+        item.className = 'sub-issue-item';
+        item.innerHTML = `
+          <span class="sub-issue-depth">${genLabel(addDepth)}</span>
+          <span class="sub-issue-title" title="${esc(node.title)}">${esc(node.title)}</span>
+          ${childCount
+            ? `<span style="font-size:10px;padding:1px 5px;background:var(--sub-bg);border:1px solid var(--border);border-radius:8px;opacity:0.8">${childCount} sub</span>`
+            : ''}
+          <button class="sub-issue-edit" data-modal-edit="${i}" title="${esc(genLabel(addDepth))} ${esc(IC.issueEditTip)}${canDrillIn ? '' : ''}">
+            <svg xmlns="http://www.w3.org/2000/svg" height="12px" viewBox="0 -960 960 960" width="12px" fill="currentColor" style="vertical-align:middle;margin-right:3px"><path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z"/></svg>
+          </button>
+          ${canDrillIn
+            ? `<button class="sub-issue-edit" data-drill="${i}" title="${esc(genLabel(addDepth + 1))} ${esc(IC.formAddSubTip)}" style="color:var(--accent);font-size:11px">＋ Sub-Issue</button>`
+            : `<span style="font-size:10px;opacity:0.35;padding:0 4px">Gen7(${esc(IC.formDepthMaxTip)})</span>`}
+          ${!node.synced
+            ? `<button class="sub-issue-edit" data-modal-del="${i}" title="${esc(IC.issueDeleteTip)}" style="color:#f48771">✕</button>`
+            : `<span style="font-size:10px;color:#4caf50;padding:0 2px" title="${esc(IC.issueSyncedTip)}">✓</span>`}
+        `;
+        list.appendChild(item);
+      });
+    }
+
+    // ── Clear add form ────────────────────────────────────────────
+
+    function clearAddForm() {
+      document.getElementById('sub-title').value      = '';
+      document.getElementById('sub-body').value       = '';
+      document.getElementById('sub-start-date').value = '';
+      document.getElementById('sub-end-date').value   = '';
+    }
+
+    // ── Event handlers ────────────────────────────────────────────
+
+    // Section A: save edit
+    document.getElementById('modal-save-edit').addEventListener('click', () => {
+      const node = getNodeAtPath(modalPath);
+      if (!node) return;
+      const newTitle = document.getElementById('edit-node-title').value.trim();
+      if (!newTitle) {
+        document.getElementById('edit-node-title').style.borderColor = '#f48771';
+        setTimeout(() => { document.getElementById('edit-node-title').style.borderColor = ''; }, 2000);
+        return;
+      }
+      node.title     = newTitle;
+      node.startDate = document.getElementById('edit-node-start').value || undefined;
+      node.endDate   = document.getElementById('edit-node-end').value || undefined;
+      node.body      = document.getElementById('edit-node-body').value;
+      renderModal();
+    });
+
+    // Section B: add new
+    document.getElementById('modal-add').addEventListener('click', () => {
+      const title = document.getElementById('sub-title').value.trim();
+      if (!title) {
+        document.getElementById('sub-title').focus();
+        document.getElementById('sub-title').style.borderColor = '#f48771';
+        setTimeout(() => { document.getElementById('sub-title').style.borderColor = ''; }, 2000);
+        return;
+      }
+      const addDepth = getAddDepthAtPath(modalPath);
+      getChildrenAtPath(modalPath).push({
+        localId:   `local-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        title,
+        body:       document.getElementById('sub-body').value,
+        startDate:  document.getElementById('sub-start-date').value || undefined,
+        endDate:    document.getElementById('sub-end-date').value || undefined,
+        state:      'open',
+        depth:      addDepth,
+        synced:     false,
+        children:   [],
+      });
+      clearAddForm();
+      renderModalList();
+      document.getElementById('sub-title').focus();
+    });
+
+    // Section C list: edit (drill-down) / add Sub-Issue / delete
+    document.getElementById('modal-sub-list').addEventListener('click', e => {
+      const editBtn = e.target.closest('[data-modal-edit]');
+      const drillBtn = e.target.closest('[data-drill]');
+      const delBtn  = e.target.closest('[data-modal-del]');
+      if (editBtn)  { openModal([...modalPath, parseInt(editBtn.dataset.modalEdit)]); return; }
+      if (drillBtn) { openModal([...modalPath, parseInt(drillBtn.dataset.drill)]);    return; }
+      if (delBtn) {
+        getChildrenAtPath(modalPath).splice(parseInt(delBtn.dataset.modalDel), 1);
+        renderModalList();
+      }
+    });
+
+    // Back
+    document.getElementById('modal-back').addEventListener('click', () => {
+      openModal(modalPath.slice(0, -1));
+    });
+
+    // Done / Cancel / ✕
+    document.getElementById('modal-done').addEventListener('click', closeModal);
+    document.getElementById('modal-cancel').addEventListener('click', () => { clearAddForm(); closeModal(); });
+    document.getElementById('modal-close').addEventListener('click', () => { clearAddForm(); closeModal(); });
+
+    // Main form: "＋ Sub-Issue" button
+    document.getElementById('btn-add-sub').addEventListener('click', () => openModal([]));
+
+    // Main form list: ✏ (drill-down) / ＋ Sub-Issue / delete
+    document.getElementById('sub-issues-list').addEventListener('click', e => {
+      const drillBtn = e.target.closest('[data-drill-root]');
+      const delBtn   = e.target.closest('[data-del-root]');
+      if (drillBtn) { openModal([parseInt(drillBtn.dataset.drillRoot)]); return; }
+      if (delBtn) {
+        formState.children.splice(parseInt(delBtn.dataset.delRoot), 1);
+        renderSubIssues();
+      }
+    });
+
+    // ─── Form submit ──────────────────────────────────────────────
+    document.getElementById('btn-submit').addEventListener('click', submitForm);
+    document.getElementById('btn-cancel').addEventListener('click', () => {
+      vscode.postMessage({ type: 'cancel' });
+    });
+
+    function submitForm() {
+      const title = document.getElementById('title').value.trim();
+      if (!title) { showError(IC.formErrorTitle); return; }
+      const groupId = document.getElementById('group-select').value;
+      const issue = {
+        title,
+        body: document.getElementById('body').value,
+        startDate: document.getElementById('start-date').value || undefined,
+        endDate: document.getElementById('end-date').value || undefined,
+        state: formState.issue?.state || 'open',
+        depth: formState.depth,
+        children: formState.children,
+        labels: formState.selectedLabels,
+        assignees: formState.issue?.assignees || [],
+        parentLocalId: formState.parentLocalId || undefined,
+        isActionable:       document.getElementById('is-actionable').checked,
+        aiPrompt:           document.getElementById('ai-prompt').value || undefined,
+        githubPromptFiles:  formState.githubPromptFiles.length > 0 ? [...formState.githubPromptFiles] : undefined,
+      };
+      vscode.postMessage({
+        type: 'submit',
+        issue,
+        groupId,
+        parentLocalId: formState.parentLocalId || undefined,
+        mode: formState.mode,
+        localId: formState.issue?.localId,
+      });
+    }
+
+    function resetForm() {
+      document.getElementById('title').value = '';
+      document.getElementById('body').value = '';
+      document.getElementById('start-date').value = '';
+      document.getElementById('end-date').value = '';
+      document.getElementById('is-actionable').checked = false;
+      document.getElementById('ai-prompt').value = '';
+      document.getElementById('ai-prompt-group').style.display = 'none';
+      formState.children = [];
+      formState.selectedLabels = [];
+      formState.isActionable      = false;
+      formState.aiPrompt          = '';
+      formState.githubPromptFiles = [];
+      renderSubIssues();
+      renderLabels();
+    }
+
+    function showError(msg) {
+      const el = document.getElementById('error-msg');
+      el.textContent = msg; el.style.display = 'block';
+      document.getElementById('success-msg').style.display = 'none';
+      setTimeout(() => { el.style.display = 'none'; }, 5000);
+    }
+    function showSuccess(msg) {
+      const el = document.getElementById('success-msg');
+      el.textContent = msg; el.style.display = 'block';
+      document.getElementById('error-msg').style.display = 'none';
+      setTimeout(() => { el.style.display = 'none'; }, 3000);
+    }
+
+    function deepClone(obj) { return JSON.parse(JSON.stringify(obj)); }
+    function esc(str) {
+      return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    // Initialize locale strings then signal ready
+    initLocale();
+    vscode.postMessage({ type: 'ready' });
+  </script>
+</body>
+</html>

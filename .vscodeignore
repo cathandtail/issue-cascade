@@ -1,0 +1,12 @@
+.vscode/**
+.vscode-test/**
+node_modules/**
+esbuild.config.js
+tsconfig.json
+**/*.map
+
+# TypeScript ソースは除外するが webview の HTML は含める
+src/**
+!src/webviews/**/*.html
+
+!out/**

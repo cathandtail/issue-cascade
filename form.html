@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub Issue Registration Form with Extended Toolbar</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #f6f8fa;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+        }
+        .github-border {
+            border: 1px solid #d0d7de;
+        }
+        .github-focus:focus {
+            border-color: #0969da;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(9, 105, 218, 0.3);
+        }
+        .tab-active {
+            border-bottom: 2px solid #fd8c73;
+            color: #1f2328;
+            font-weight: 600;
+        }
+        .tab-inactive {
+            color: #636c76;
+        }
+        .tab-inactive:hover {
+            color: #1f2328;
+            background-color: #f3f4f6;
+        }
+        .toolbar-btn {
+            padding: 4px 8px;
+            border-radius: 6px;
+            color: #636c76;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .toolbar-btn:hover {
+            background-color: #ebecf0;
+            color: #1f2328;
+        }
+        pre {
+            background-color: #f6f8fa;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+        /* Custom styles for Task List in preview */
+        .task-list-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+        .task-list-item input[type="checkbox"] {
+            margin: 0;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div class="max-w-4xl mx-auto bg-white github-border rounded-md shadow-sm overflow-hidden">
+        <!-- Header -->
+        <div class="bg-[#f6f8fa] border-b border-[#d0d7de] p-4">
+            <h1 class="text-xl font-semibold text-[#1f2328]">Create new issue</h1>
+        </div>
+
+        <form id="issue-form" class="p-4 space-y-4">
+            <!-- Title Input -->
+            <div>
+                <input type="text" id="issue-title" placeholder="Title" 
+                    class="w-full p-2 bg-[#f6f8fa] github-border rounded-md github-focus text-lg"
+                    required>
+            </div>
+
+            <!-- Editor Section -->
+            <div class="github-border rounded-md overflow-hidden">
+                <!-- Tabs -->
+                <div class="flex border-b border-[#d0d7de] bg-[#f6f8fa] px-2 pt-2">
+                    <button type="button" id="tab-write" class="px-4 py-2 text-sm tab-active">
+                        Write
+                    </button>
+                    <button type="button" id="tab-preview" class="px-4 py-2 text-sm tab-inactive">
+                        Preview
+                    </button>
+                </div>
+
+                <!-- Write Mode -->
+                <div id="editor-container">
+                    <!-- Markdown Toolbar -->
+                    <div id="toolbar" class="flex items-center space-x-1 p-2 border-b border-[#d0d7de] bg-white overflow-x-auto">
+                        <button type="button" class="toolbar-btn" onclick="insertMD('h')" title="Heading"><strong>H</strong></button>
+                        <button type="button" class="toolbar-btn" onclick="insertMD('b')" title="Bold"><strong>B</strong></button>
+                        <button type="button" class="toolbar-btn" onclick="insertMD('i')" title="Italic"><em>I</em></button>
+                        <div class="w-px h-4 bg-gray-300 mx-1"></div>
+                        <button type="button" class="toolbar-btn" onclick="insertMD('quote')" title="Quote">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 16 16"><path d="M1.75 2.5a.75.75 0 000 1.5h10.909l-4.147 4.146a.75.75 0 001.06 1.061l5.427-5.427A.75.75 0 0014.5 3.25a.75.75 0 00-1.5 0v.543L8.56 8.56a.75.75 0 01-1.06 0L3.06 4.146A.75.75 0 001.75 2.5z"></path><path d="M1.75 10.5a.75.75 0 01.75-.75h12.5a.75.75 0 010 1.5H2.5a.75.75 0 01-.75-.75z"></path></svg>
+                        </button>
+                        <button type="button" class="toolbar-btn" onclick="insertMD('code')" title="Code">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 16 16"><path d="M4.72 3.22a.75.75 0 011.06 1.06L2.06 8l3.72 3.72a.75.75 0 11-1.06 1.06L.47 8.53a.75.75 0 010-1.06l4.25-4.25zm6.56 0a.75.75 0 011.06 0l4.25 4.25a.75.75 0 010 1.06l-4.25 4.25a.75.75 0 11-1.06-1.06L13.94 8l-3.72-3.72a.75.75 0 010-1.06z"></path></svg>
+                        </button>
+                        <button type="button" class="toolbar-btn" onclick="insertMD('link')" title="Link">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 16 16"><path d="M7.775 3.275a.75.75 0 001.06 1.06l1.25-1.25a2 2 0 112.83 2.83l-2.5 2.5a2 2 0 01-2.83 0 .75.75 0 00-1.06 1.06 3.5 3.5 0 004.95 0l2.5-2.5a3.5 3.5 0 00-4.95-4.95l-1.25 1.25zm-4.24 4.24a.75.75 0 00-1.06 1.06 3.5 3.5 0 004.95 4.95l1.25-1.25a.75.75 0 00-1.06-1.06l-1.25 1.25a2 2 0 01-2.83-2.83l2.5-2.5a2 2 0 012.83 0 .75.75 0 001.06-1.06 3.5 3.5 0 00-4.95 0l-2.5 2.5z"></path></svg>
+                        </button>
+                        <div class="w-px h-4 bg-gray-300 mx-1"></div>
+                        <button type="button" class="toolbar-btn" onclick="insertMD('list')" title="Unordered List">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 16 16"><path d="M2 4a1 1 0 100-2 1 1 0 000 2zm3.75-1.5a.75.75 0 000 1.5h8.5a.75.75 0 000-1.5h-8.5zm0 5a.75.75 0 000 1.5h8.5a.75.75 0 000-1.5h-8.5zm0 5a.75.75 0 000 1.5h8.5a.75.75 0 000-1.5h-8.5zM2 9a1 1 0 100-2 1 1 0 000 2zm1 3a1 1 0 11-2 0 1 1 0 012 0z"></path></svg>
+                        </button>
+                        <button type="button" class="toolbar-btn" onclick="insertMD('numbered')" title="Numbered List">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 16 16"><path d="M2.003 2.5a.5.5 0 0 0 .707 0l1.293-1.293a.5.5 0 0 1 .707.707l-1.646 1.646a.5.5 0 0 1-.708 0l-1.646-1.646a.5.5 0 0 1 .708-.707L2.003 2.5zM5 2.25a.75.75 0 0 1 .75-.75h8.5a.75.75 0 0 1 0 1.5h-8.5a.75.75 0 0 1-.75-.75zM5 7.75a.75.75 0 0 1 .75-.75h8.5a.75.75 0 0 1 0 1.5h-8.5a.75.75 0 0 1-.75-.75zM5 13.25a.75.75 0 0 1 .75-.75h8.5a.75.75 0 0 1 0 1.5h-8.5a.75.75 0 0 1-.75-.75zM1.5 8a1 1 0 1 1 2 0 1 1 0 0 1-2 0zm1 7a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"></path></svg>
+                        </button>
+                        <button type="button" class="toolbar-btn" onclick="insertMD('task')" title="Task List">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 16 16"><path d="M2.5 1.75a.25.25 0 0 1 .25-.25h10.5a.25.25 0 0 1 .25.25v12.5a.25.25 0 0 1-.25.25H2.75a.25.25 0 0 1-.25-.25V1.75zM4 3v10h8V3H4z"></path><path d="M5.22 7.22a.75.75 0 0 1 1.06 0L8 8.94l2.72-2.72a.75.75 0 1 1 1.06 1.06l-3.25 3.25a.75.75 0 0 1-1.06 0L5.22 8.28a.75.75 0 0 1 0-1.06z"></path></svg>
+                        </button>
+                    </div>
+
+                    <div class="p-2">
+                        <textarea id="issue-body" placeholder="Leave a comment" 
+                            class="w-full h-48 p-3 bg-[#f6f8fa] github-border rounded-md github-focus resize-y text-sm font-mono"
+                        ></textarea>
+                        <p class="text-xs text-[#636c76] mt-2 flex items-center">
+                            <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 16 16"><path d="M14.854 4.854l-2-2a.5.5 0 00-.708 0L5.146 9.854a.5.5 0 00-.146.353V13.5a.5.5 0 00.5.5h3.293a.5.5 0 00.353-.146l7-7a.5.5 0 000-.708zM9 13H6v-3l6.146-6.146 3 3L9 13z"></path></svg>
+                            Styling with Markdown is supported
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Preview Mode (Hidden by default) -->
+                <div id="preview-container" class="p-4 min-h-[15rem] hidden bg-white">
+                    <div id="preview-content" class="text-[#1f2328] prose prose-sm max-w-none">
+                        Nothing to preview
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer Actions -->
+            <div class="flex justify-end space-x-3 pt-2">
+                <button type="button" class="px-4 py-2 text-sm font-medium text-[#1f2328] bg-[#f6f8fa] github-border rounded-md hover:bg-[#ebecf0]">
+                    Cancel
+                </button>
+                <button type="submit" class="px-4 py-2 text-sm font-semibold text-white bg-[#1f883d] rounded-md hover:bg-[#1a7f37] shadow-sm transition-colors">
+                    Submit new issue
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Feedback Message -->
+    <div id="toast" class="fixed bottom-4 right-4 bg-[#1f2328] text-white px-6 py-3 rounded-md shadow-lg transform translate-y-20 transition-transform duration-300 z-50">
+        Issue submitted successfully!
+    </div>
+
+    <script>
+        // DOM Elements
+        const writeTab = document.getElementById('tab-write');
+        const previewTab = document.getElementById('tab-preview');
+        const editorContainer = document.getElementById('editor-container');
+        const previewContainer = document.getElementById('preview-container');
+        const previewContent = document.getElementById('preview-content');
+        const issueBody = document.getElementById('issue-body');
+        const issueForm = document.getElementById('issue-form');
+        const toast = document.getElementById('toast');
+
+        // Tab Switching Logic
+        writeTab.addEventListener('click', () => {
+            writeTab.className = 'px-4 py-2 text-sm tab-active';
+            previewTab.className = 'px-4 py-2 text-sm tab-inactive';
+            editorContainer.classList.remove('hidden');
+            previewContainer.classList.add('hidden');
+        });
+
+        previewTab.addEventListener('click', () => {
+            previewTab.className = 'px-4 py-2 text-sm tab-active';
+            writeTab.className = 'px-4 py-2 text-sm tab-inactive';
+            editorContainer.classList.add('hidden');
+            previewContainer.classList.remove('hidden');
+            
+            const rawText = issueBody.value;
+            if (!rawText.trim()) {
+                previewContent.innerHTML = '<span class="text-[#636c76] italic">Nothing to preview</span>';
+            } else {
+                previewContent.innerHTML = formatPreview(rawText);
+            }
+        });
+
+        /**
+         * Markdown Editor Helper Functions
+         */
+        function insertMD(type) {
+            const start = issueBody.selectionStart;
+            const end = issueBody.selectionEnd;
+            const text = issueBody.value;
+            const selectedText = text.substring(start, end);
+            let before = text.substring(0, start);
+            let after = text.substring(end);
+            let insertion = "";
+
+            // Newline handler for block elements
+            const needsNewline = before.length > 0 && !before.endsWith('\n');
+            const prefix = needsNewline ? '\n' : '';
+
+            switch (type) {
+                case 'h':
+                    insertion = `${prefix}### ${selectedText || "Heading"}`;
+                    break;
+                case 'b':
+                    insertion = `**${selectedText || "bold text"}**`;
+                    break;
+                case 'i':
+                    insertion = `_${selectedText || "italic text"}_`;
+                    break;
+                case 'quote':
+                    insertion = `${prefix}> ${selectedText || "Quote"}`;
+                    break;
+                case 'code':
+                    if (selectedText.includes('\n')) {
+                        insertion = `\n\`\`\`\n${selectedText || "code here"}\n\`\`\`\n`;
+                    } else {
+                        insertion = `\`${selectedText || "code"}\``;
+                    }
+                    break;
+                case 'link':
+                    insertion = `[${selectedText || "link text"}](https://example.com)`;
+                    break;
+                case 'list':
+                    insertion = `${prefix}- ${selectedText || "List item"}`;
+                    break;
+                case 'numbered':
+                    insertion = `${prefix}1. ${selectedText || "List item"}`;
+                    break;
+                case 'task':
+                    insertion = `${prefix}- [ ] ${selectedText || "Task"}`;
+                    break;
+            }
+
+            issueBody.value = before + insertion + after;
+            issueBody.focus();
+            
+            // Set selection
+            const newPos = start + insertion.length;
+            issueBody.setSelectionRange(newPos, newPos);
+        }
+
+        // Extended Text to HTML formatter
+        function formatPreview(text) {
+            return text
+                .replace(/^### (.*$)/gim, '<h3 class="text-lg font-bold mt-4 mb-2 border-b pb-1">$1</h3>')
+                .replace(/^## (.*$)/gim, '<h2 class="text-xl font-bold mt-4 mb-2 border-b pb-1">$1</h2>')
+                .replace(/^# (.*$)/gim, '<h1 class="text-2xl font-bold mt-4 mb-2 border-b pb-2">$1</h1>')
+                .replace(/\*\*(.*)\*\*/gim, '<strong>$1</strong>')
+                .replace(/_(.*)_/gim, '<em>$1</em>')
+                .replace(/`(.*)`/gim, '<code class="bg-[#f6f8fa] px-1 py-0.5 rounded border text-sm font-mono">$1</code>')
+                .replace(/^> (.*$)/gim, '<blockquote class="border-l-4 border-gray-300 pl-4 text-gray-600 italic my-2">$1</blockquote>')
+                .replace(/\[(.*?)\]\((.*?)\)/gim, '<a href="$2" class="text-blue-600 hover:underline" target="_blank">$1</a>')
+                .replace(/^- \[ \] (.*$)/gim, '<div class="task-list-item"><input type="checkbox" disabled> <span>$1</span></div>')
+                .replace(/^- \[x\] (.*$)/gim, '<div class="task-list-item"><input type="checkbox" checked disabled> <span class="line-through text-gray-500">$1</span></div>')
+                .replace(/^- (.*$)/gim, '<li class="ml-4 list-disc">$1</li>')
+                .replace(/^\d+\. (.*$)/gim, '<li class="ml-4 list-decimal">$1</li>')
+                .replace(/\n/g, '<br>');
+        }
+
+        // Form Submission Logic
+        issueForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const title = document.getElementById('issue-title').value;
+            const body = issueBody.value;
+
+            console.log('Issue Submitted:', { title, body });
+
+            toast.classList.remove('translate-y-20');
+            
+            setTimeout(() => {
+                toast.classList.add('translate-y-20');
+                issueForm.reset();
+                previewContent.innerHTML = 'Nothing to preview';
+                writeTab.click();
+            }, 3000);
+        });
+    </script>
+</body>
+</html>

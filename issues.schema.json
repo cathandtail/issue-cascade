@@ -1,0 +1,63 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://issuecascade/issues.schema.json",
+  "title": "IssueCascade Issues Store",
+  "type": "object",
+  "required": ["version", "groups"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "version": { "type": "string" },
+    "groups": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/IssueGroup" }
+    }
+  },
+  "definitions": {
+    "IssueGroup": {
+      "type": "object",
+      "required": ["id", "name", "repo", "issues", "createdAt", "updatedAt"],
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "repo": {
+          "type": "string",
+          "pattern": "^[\\w.-]+/[\\w.-]+$",
+          "description": "owner/repo 形式"
+        },
+        "projectId": { "type": "string" },
+        "issues": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/IssueNode" }
+        },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "IssueNode": {
+      "type": "object",
+      "required": ["localId", "title", "body", "state", "depth", "synced", "children"],
+      "properties": {
+        "localId": { "type": "string" },
+        "githubId": { "type": "string" },
+        "githubNumber": { "type": "integer" },
+        "title": { "type": "string", "minLength": 1 },
+        "body": { "type": "string" },
+        "state": { "type": "string", "enum": ["open", "closed"] },
+        "startDate": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+        "endDate": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+        "milestoneId": { "type": "string" },
+        "milestoneTitle": { "type": "string" },
+        "depth": { "type": "integer", "minimum": 0, "maximum": 6 },
+        "synced": { "type": "boolean" },
+        "syncedAt": { "type": "string" },
+        "children": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/IssueNode" }
+        },
+        "labels": { "type": "array", "items": { "type": "string" } },
+        "assignees": { "type": "array", "items": { "type": "string" } },
+        "parentLocalId": { "type": "string" }
+      }
+    }
+  }
+}

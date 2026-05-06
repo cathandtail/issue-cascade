@@ -1,0 +1,89 @@
+{
+  "$schema": "../issues.schema.json",
+  "version": "1.0",
+  "groups": [
+    {
+      "id": "group-sample-001",
+      "name": "ユーザー認証機能",
+      "repo": "myorg/myrepo",
+      "issues": [
+        {
+          "localId": "epic-001",
+          "title": "ユーザー認証システムの実装",
+          "body": "## 概要\nログイン・サインアップ・パスワードリセットを含む認証システム全体を実装する。\n\n## 受け入れ条件\n- [ ] ログインができる\n- [ ] サインアップができる\n- [ ] パスワードリセットができる",
+          "state": "open",
+          "startDate": "2026-04-24",
+          "endDate": "2026-05-31",
+          "depth": 0,
+          "synced": false,
+          "children": [
+            {
+              "localId": "sub-001",
+              "title": "ログイン画面の実装",
+              "body": "メールアドレス＋パスワードでのログインフォームを実装する。",
+              "state": "open",
+              "startDate": "2026-04-24",
+              "endDate": "2026-05-10",
+              "depth": 1,
+              "synced": false,
+              "children": [
+                {
+                  "localId": "grand-001",
+                  "title": "フォームバリデーションの実装",
+                  "body": "- メールアドレス形式チェック\n- パスワード8文字以上\n- 必須項目チェック",
+                  "state": "open",
+                  "depth": 2,
+                  "synced": false,
+                  "children": []
+                },
+                {
+                  "localId": "grand-002",
+                  "title": "エラーメッセージのUIデザイン",
+                  "body": "バリデーションエラー時の表示デザインを実装する。",
+                  "state": "open",
+                  "depth": 2,
+                  "synced": false,
+                  "children": []
+                }
+              ]
+            },
+            {
+              "localId": "sub-002",
+              "title": "サインアップ画面の実装",
+              "body": "新規ユーザー登録フォームを実装する。\n- 名前\n- メールアドレス\n- パスワード（確認あり）",
+              "state": "open",
+              "startDate": "2026-05-01",
+              "endDate": "2026-05-15",
+              "depth": 1,
+              "synced": false,
+              "children": [
+                {
+                  "localId": "grand-003",
+                  "title": "メール確認フローの実装",
+                  "body": "サインアップ後に確認メールを送信し、リンクをクリックで有効化する。",
+                  "state": "open",
+                  "depth": 2,
+                  "synced": false,
+                  "children": []
+                }
+              ]
+            },
+            {
+              "localId": "sub-003",
+              "title": "パスワードリセット機能",
+              "body": "メールアドレスを入力してリセットリンクを送信するフローを実装する。",
+              "state": "open",
+              "startDate": "2026-05-16",
+              "endDate": "2026-05-31",
+              "depth": 1,
+              "synced": false,
+              "children": []
+            }
+          ]
+        }
+      ],
+      "createdAt": "2026-04-24T00:00:00.000Z",
+      "updatedAt": "2026-04-24T00:00:00.000Z"
+    }
+  ]
+}

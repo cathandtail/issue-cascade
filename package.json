@@ -1,0 +1,92 @@
+{
+  "name": "issuecascade",
+  "displayName": "IssueCascade",
+  "description": "GitHub Sub-issues hierarchy (Epic > Sub > Grandchild, up to 7 generations) bulk registration",
+  "version": "0.1.0",
+  "publisher": "cathand-tail",
+  "icon": "media/icon.png",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": ["Other"],
+  "activationEvents": [],
+  "main": "./out/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "issuecascade",
+          "title": "IssueCascade",
+          "icon": "media/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "issuecascade": [
+        {
+          "type": "webview",
+          "id": "issuecascade.sidebar",
+          "name": "Issues"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "issuecascade.newGroup",
+        "title": "New Issue Group",
+        "category": "IssueCascade",
+        "icon": "$(add)"
+      },
+      {
+        "command": "issuecascade.newIssue",
+        "title": "New Issue",
+        "category": "IssueCascade"
+      },
+      {
+        "command": "issuecascade.sendToGitHub",
+        "title": "Send to GitHub",
+        "category": "IssueCascade",
+        "icon": "$(cloud-upload)"
+      },
+      {
+        "command": "issuecascade.importFromGitHub",
+        "title": "Import from GitHub",
+        "category": "IssueCascade",
+        "icon": "$(cloud-download)"
+      },
+      {
+        "command": "issuecascade.showTodaysTasks",
+        "title": "Show Today's Tasks",
+        "category": "IssueCascade",
+        "icon": "$(tasklist)"
+      },
+      {
+        "command": "issuecascade.restoreBackup",
+        "title": "Restore Backup",
+        "category": "IssueCascade"
+      },
+      {
+        "command": "issuecascade.seedTestData",
+        "title": "Seed Test Data (開発用)",
+        "category": "IssueCascade"
+      }
+    ],
+    "menus": {}
+
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run build",
+    "build": "node esbuild.config.js",
+    "watch": "node esbuild.config.js --watch",
+    "compile": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.85.0",
+    "esbuild": "^0.20.0",
+    "typescript": "^5.3.0"
+  },
+  "dependencies": {
+    "@octokit/graphql": "^8.1.0"
+  }
+}
